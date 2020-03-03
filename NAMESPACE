@@ -1,0 +1,21 @@
+### Export all functions
+# Utility functions
+export(simdiv_outsource)
+export(likelihood_func)
+export(col_names)
+export(model_generator)
+export(param_grid)
+export(re_estimator)
+export(model_error_rate)
+export(find_mle)
+export(model_select)
+export(simulate_div)
+export(bootstrap_ci)
+export(random_walks)
+export(expected_val)
+export(extract_sisters)
+
+# Import functions from parallel and base-r stats package
+importFrom(parallel, mclapply, detectCores)
+importFrom(graphics, axis, box, lines, par, title)
+importFrom(stats, dnorm, median, nlminb, quantile, rnorm, pnorm)
