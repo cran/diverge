@@ -43,11 +43,11 @@ bird_sis = extract_sisters(tree=all_birds, sis_age=TRUE)
 \donttest{
 # extract avian sister pairs and calculate ages based on molecular clock of 1.1
 # note: the actual branch lengths are in Ma, this is just a toy example
-bird_sis = extract_sisters(tree=all_birds, sis_age=T, mol_clock = 1.1)
+bird_sis = extract_sisters(tree=all_birds, sis_age=TRUE, mol_clock = 1.1)
 
 # extract avian sister pairs and calculate ages based on a crown age of 30 Ma
 # note: the actual branch lengths are in Ma, this is just a toy example
-bird_sis = extract_sisters(tree=all_birds, sis_age=T, crown_age=30)
+bird_sis = extract_sisters(tree=all_birds, sis_age=TRUE, crown_age=30)
 }
 }
 

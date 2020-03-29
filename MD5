@@ -1,4 +1,4 @@
-b6dd2606e8ee7290e474df3dffbfc10a *DESCRIPTION
+f5a302f1590a6b9039fc3c94a91aa619 *DESCRIPTION
 5ed869baa522df4ae8ccb6a897d3a909 *NAMESPACE
 19057a620b63d23ce331e21565f78fb2 *R/bootstrap_ci.R
 c76cfb38dbb6f2088784a0fcfd772076 *R/col_names.R
@@ -20,7 +20,7 @@ a11fadce1ba2d572aa79dbcf6e4ab29d *man/div_utilities.Rd
 249201a3b617ab9877e777d74a3eb0b5 *man/diverge-data.Rd
 92701bb10bd35aada14c14dd47220d25 *man/diverge-package.Rd
 15fa134e819d2fba1d807c6947ceca4a *man/expected_val.Rd
-e47e2bb1f52b7212c1365a454551bc42 *man/extract_sisters.Rd
+382f0c28feace913b43e4d61ae9a7c6c *man/extract_sisters.Rd
 a7d7d5600dc0fce34b9fc058aa192131 *man/find_mle.Rd
 00c8e4c8fb29c6f2d3e7e5990921803e *man/model_error_rate.Rd
 417cba5c3acecaf185a854db8be4538e *man/model_generator.Rd
