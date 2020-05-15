@@ -1,10 +1,13 @@
 find_mle <-
-function(model, p_starting=NULL, div, ages, GRAD = NULL, cats=NULL, breakpoint=NULL, domain=NULL, absolute=TRUE, parallel=FALSE, cores=NULL) {
+function(model, p_starting=NULL, div, ages, me1 = NULL, me2 = NULL, GRAD = NULL, cats=NULL, 
+    breakpoint=NULL, domain=NULL, absolute=TRUE, parallel=FALSE, cores=NULL) {
     
   if(model %in% c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
     "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat") == FALSE) {
     stop("Spell check: you've entered a model that doesn't match the models accepted by this function")
   }
+  if(sum(is.null(me1), is.null(me2)) == 1) stop("You've supplied measurement error 
+    for just one species in the pairs; please provide 2 or 0 vectors for measurement error")
     # gather a set of starting parameter values
     if (is.null(p_starting)==FALSE) {
       result_matrix <- cbind(p_starting, rep(NA, nrow(p_starting)))
@@ -29,14 +32,14 @@ function(model, p_starting=NULL, div, ages, GRAD = NULL, cats=NULL, breakpoint=N
     
     # search likelihood space from the various parameter starting points
     if (parallel==FALSE) {
-      res = suppressWarnings(lapply(param_list, FUN=nlminb, objective = likelihood_func, model = model, div = div, ages = ages, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000)))
+      res = suppressWarnings(lapply(param_list, FUN=nlminb, objective = likelihood_func, model = model, div = div, ages = ages, me1 = me1, me2 = me2, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000)))
     }
     if(parallel == TRUE) {
       if(is.null(cores)) {
         ncor=detectCores()
-        res <- mclapply(param_list, FUN=nlminb, objective = likelihood_func, model = model, div = div, ages = ages, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000), mc.cores=ncor) 
+        res <- mclapply(param_list, FUN=nlminb, objective = likelihood_func, model = model, div = div, ages = ages, me1 = me1, me2 = me2,cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000), mc.cores=ncor) 
       } else {
-        res = mclapply(param_list, FUN=nlminb, objective = likelihood_func, model = model, div = div, ages = ages, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, mc.cores=cores, control=list("eval.max"=1000, "iter.max"=5000))
+        res = mclapply(param_list, FUN=nlminb, objective = likelihood_func, model = model, div = div, ages = ages, me1 = me1, me2 = me2,cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, mc.cores=cores, control=list("eval.max"=1000, "iter.max"=5000))
       }
     }
     # store results in matrix
@@ -55,7 +58,7 @@ function(model, p_starting=NULL, div, ages, GRAD = NULL, cats=NULL, breakpoint=N
     # re-run the likelihood search from a starting parameter value from which the likelihood search returned the mle
     # if the search doesn't return the same end values, it was stuck on a local optima and the final estimate is not the true mle
     p = as.numeric(result_mat_ordered[1, 1:(ncol(result_mat_ordered)-1)])
-    res = suppressWarnings(nlminb(start=p, objective = likelihood_func, model = model, div = div, ages = ages, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000)))
+    res = suppressWarnings(nlminb(start=p, objective = likelihood_func, model = model, div = div, ages = ages, me1 = me1, me2 = me2, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000)))
     if (round(res$objective, 4) > round(result_mat_values_ordered[1, ncol(result_mat_values_ordered)-1], 4)) {
        warning(paste(model,": final result is not MLE", sep=""))
     }

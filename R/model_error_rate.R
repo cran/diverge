@@ -1,5 +1,5 @@
 model_error_rate <-
-function(datasets, ages, sim_model, alternatives, type, GRAD=NULL, cats=NULL, breakpoint=NULL, domain=NULL, threshold=0, parallel=FALSE, cores=NULL) {
+function(datasets, ages, sim_model, alternatives, type, me1=NULL, me2=NULL, GRAD=NULL, cats=NULL, breakpoint=NULL, domain=NULL, threshold=0, parallel=FALSE, cores=NULL) {
   
   if(sim_model %in% c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
     "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat") == FALSE) {
@@ -13,9 +13,9 @@ function(datasets, ages, sim_model, alternatives, type, GRAD=NULL, cats=NULL, br
   if(parallel == TRUE) {
     if(is.null(cores)) ncor = detectCores()
     if(is.null(cores) == FALSE) ncor = cores
-    y = mclapply(X=datasets, FUN=model_select, ages=ages, models=c(sim_model, alternatives), GRAD=GRAD, cats=cats, breakpoint=breakpoint, domain=domain, mc.cores=ncor)
+    y = mclapply(X=datasets, FUN=model_select, ages=ages, models=c(sim_model, alternatives), GRAD=GRAD, cats=cats, me1=NULL, me2=NULL, breakpoint=breakpoint, domain=domain, mc.cores=ncor)
   } else {
-    y = lapply(X=datasets, FUN=model_select, ages=ages, models=c(sim_model, alternatives), GRAD=GRAD, cats=cats, breakpoint=breakpoint, domain=domain)
+    y = lapply(X=datasets, FUN=model_select, ages=ages, models=c(sim_model, alternatives), GRAD=GRAD, cats=cats, me1=NULL, me2=NULL, breakpoint=breakpoint, domain=domain)
   }
   
    # calculate error rate

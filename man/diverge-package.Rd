@@ -35,6 +35,10 @@ div - a vector of trait differences for each pair in the dataset. Required for a
 
 ages - a vector containing the age (i.e. estimated time since divergence) for each pair in the dataset.
 
+me1 - measurement error (standard error of mean) in species 1s of each pair (variance/n-measurements)
+
+me1 - measurement error (standard error of mean) in species 2s of each pair (variance/n-measurements)
+
 GRAD - a vector containing the gradient position of each pair. This is the value of a continuous variable such as latitude or body size across which parameters are hypothesized to vary. Required for all models with the 'linear' suffix.
 
 cats - a vector containing the category code (0, 1, or 2) for each pair in the dataset. Required when using the DA-cat model only. 
@@ -42,7 +46,7 @@ cats - a vector containing the category code (0, 1, or 2) for each pair in the d
 breakpoint - a vector of breakpoint times for each pair in the dataset. These are the times after divergence at which a shift occurs in the psi parameter of a DA model. Required for DA_bp and DA_bp_linear. See model_select for details on how to calculate.
 
 IMPORTANT: \cr
-div, ages, GRAD, cats, and breakpoint vectors must be aligned such that div[i], age[i], grad[i], cat[i], and breakpoint[i] represent values for the same i'th pair.
+div, ages, ms1, ms2, GRAD, cats, and breakpoint vectors must be aligned such that div[i], age[i], grad[i], cat[i], and breakpoint[i] represent values for the same i'th pair.
 
 PARALLELIZATION: \cr
 Many functions in 'diverge' can be run in parallel across multiple cores through the 'parallel' logical argument. This functionality uses forking and is therefore unavailable on windows machines. All examples shown in function manuals are run in serial. We encourage users to insert parallel=TRUE in these commands where resources allow.  

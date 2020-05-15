@@ -7,7 +7,8 @@ Simulate trait divergence
 Simulate replicate sets of lineage pair trait divergence under one of ten evolutionary models.
 }
 \usage{
-simulate_div(model, pars, ages, GRAD = NULL, cats=NULL, breakpoint = NULL, N = 1)
+simulate_div(model, pars, ages, me_prop=NULL, GRAD = NULL, cats=NULL, 
+  breakpoint = NULL, Nsets = 1)
 }
 \arguments{
   \item{model}{
@@ -30,6 +31,9 @@ DA_bp_linear: alpha, sig2, psi1_slope, psi1_int, psi2_slope, psi2_int
   \item{ages}{
 Vector of 'ages' (i.e. times since divergence) of lineage pairs for which to simulate trait divergence.
 }
+  \item{me_prop}{
+Induced measurement error as a proportion of the expected variance. Can be a single value applied to all simulated species or a vector of values of length equal to length(ages). 
+}
  \item{GRAD}{
 Vector containing the gradient position of each pair to be simulated. This is the value of a continuous variable such as latitude or body size across which parameters will vary. Required for all models with 'linear' suffix.
 }
@@ -39,18 +43,18 @@ Vector containing the category code (0, 1, or 2) for each pair (see model_select
   \item{breakpoint}{
 Vector of breakpoint times (times after 0 at which a discrete shift occurs in psi) for each lineage pair to be simulated. Required for all "bp" models. Must align with "ages" vector such that ages[i] and breakpoint[i] correspond to the same lineage pair. When using bp models, datasets can and should be simulated with a mix of pairs that have and have not experienced a shift in psi (see model_select for details on bp models). Set bp=0 for pairs that experience no shift.
 }
-  \item{N}{
+  \item{Nsets}{
 Number of datasets to simulate. 
 }
 }
 \details{
-Simulates replicate sets of trait divegence under one of ten evolutionary models given a user-defined set of lineage pair ages. Since all evolutionary models are stochastic process models, replicate datasets simulated under the same model parameters are not identical.
+Simulates replicate sets of trait divegence under one of ten evolutionary models given a user-defined set of lineage pair ages. Since all evolutionary models are stochastic process models, replicate datasets simulated under the same model parameters are not identical. Users can simulate the addition of measurement error using the ms_prop argument, which denotes measurement error as a proportion of the expected variance (e.g. ms_prop = 0.1 corresponds to a measurement error in each species equal to 10 percent of the expected variance in the trait in that species, given the parameters). 
 }
 \value{
-Returns a vector (if N=1) or a list of vectors (if N>1) for replicate sets of lineage-pair trait divergences.
+Returns a vector (if Nsets=1) representing divergences for one dataset or a list of vectors (if Nsets>1) for replicate datasets of lineage-pair trait divergences.
 }
 \author{
-Sean A.S. Anderson
+Sean A. S. Anderson
 }
 \examples{
 

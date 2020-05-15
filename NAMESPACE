@@ -1,6 +1,5 @@
 ### Export all functions
 # Utility functions
-export(simdiv_outsource)
 export(likelihood_func)
 export(col_names)
 export(model_generator)

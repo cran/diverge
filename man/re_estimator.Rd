@@ -7,8 +7,9 @@ Estimate model parameters
 Re-estimate known model parameters from replicate datasets simulated under a given model. Facilitates power analyses and the measure of accuracy and precision in parameter estimation. 
 }
 \usage{
-re_estimator(model, div, ages, GRAD = NULL, cats=NULL, breakpoint = NULL, domain = NULL, 
-  p_starting = NULL, parallel = FALSE, cores = NULL, absolute = TRUE)
+re_estimator(model, div, ages, me1=NULL, me2=NULL, GRAD = NULL, cats=NULL, 
+  breakpoint = NULL, domain = NULL, p_starting = NULL, parallel = FALSE, cores = NULL, 
+  absolute = TRUE)
 }
 \arguments{
   \item{model}{
@@ -19,6 +20,12 @@ Vector of trait divergences for a set of lineage pairs. Calculated for each pair
 }
   \item{ages}{
 Vector containing the age (i.e. estimated time since divergence) for each pair in the dataset. IMPORTANT: div, ages, GRAD, and breakpoint vectors must be aligned such that div[i] age[i] grad[i] and breakpoint[i] represent values for the same lineage pair.
+}
+  \item{me1}{
+Vector containing the measurement error (standard error of mean) for species 1s of each pair (for one species = variance/No.measurements)
+}
+  \item{me2}{
+Vector containing the measurement error (standard error of mean) for species 2s of each pair (for one species = variance/No.measurements)
 }
   \item{GRAD}{
 Vector containing the gradient position of each pair. This is the value of a continuous variable such as latitude or body size across which parameters are hypothesized to vary. Required for models with 'linear' suffix.

@@ -1,5 +1,5 @@
 model_select <-
-function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,   
+function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,   
     models = c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
     "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat"), 
     starting = NULL, absolute=TRUE, parallel=FALSE, cores=NULL) {
@@ -16,6 +16,8 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat")) == FALSE) {
     stop("Spell check: you've entered at least one model that doesn't match the models accepted by this function")
   }
+  if(sum(is.null(me1), is.null(me2)) == 1) stop("You've supplied measurement error 
+    for just one species in the pairs; please provide 2 or 0 vectors for measurement error")
 
   # create shared output matrix to summarize results from likelihood searches
   RESULTS_SUMMARY <- matrix(NA, length(models), 19)
@@ -33,11 +35,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "BM_null")  
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "BM_null", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "BM_null", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -50,11 +52,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "BM_linear")  
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "BM_linear", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "BM_linear", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -68,11 +70,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "OU_null")  
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "OU_null", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "OU_null", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -86,11 +88,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "OU_linear")  
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "OU_linear", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "OU_linear", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -105,11 +107,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "OU_linear_sig")  
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "OU_linear_sig", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "OU_linear_sig", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -124,11 +126,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_null")  
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_null", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_null", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -146,11 +148,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_linear")
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_linear", p_starting = starting[[j]], 
-        div = div, ages= ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages= ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_linear", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -173,11 +175,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_cat")
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_cat", p_starting = starting[[j]], 
-        div = div, ages= ages, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages= ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_cat", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -194,11 +196,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_wt")
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_wt", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_wt", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par)# no. params
@@ -215,11 +217,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_bp")
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_bp", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, breakpoint=breakpoint, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, breakpoint=breakpoint, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_bp", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, breakpoint=breakpoint, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, breakpoint=breakpoint, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -235,11 +237,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_wt_linear")
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_wt_linear", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_wt_linear", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
@@ -258,11 +260,11 @@ function (div, ages, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,
     j <- which(models == "DA_bp_linear")
     if (is.null(starting[[j]][1]) == FALSE) {
       res <- find_mle(model = "DA_bp_linear", p_starting = starting[[j]], 
-        div = div, ages = ages, GRAD = GRAD, breakpoint=breakpoint, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, breakpoint=breakpoint, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     if (is.null(starting[[j]][1])) {
       res <- find_mle(model = "DA_bp_linear", p_starting = NULL, div = div, 
-        ages = ages, GRAD = GRAD, breakpoint=breakpoint, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, breakpoint=breakpoint, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
     RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
     RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params

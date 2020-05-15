@@ -1,5 +1,5 @@
 bootstrap_ci <-
-function(div, ages, GRAD=NULL, cats=NULL, breakpoint=NULL, domain=NULL, model, 
+function(div, ages, me1=NULL, me2=NULL, GRAD=NULL, cats=NULL, breakpoint=NULL, domain=NULL, model, 
 N, parallel=FALSE, cores=NULL, starting=NULL) {
 
   if(model %in% c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
@@ -15,10 +15,10 @@ N, parallel=FALSE, cores=NULL, starting=NULL) {
   if(parallel==TRUE) {
     if(is.null(cores)) ncor=detectCores()
     if(is.null(cores)==FALSE) ncor=cores
-    boot_pars = mclapply(X=indices, FUN=function(x) find_mle(div=div[x], ages=ages[x], GRAD=GRAD[x], cats=cats[x], domain=domain, breakpoint=breakpoint[x], model=model, p_starting=starting), mc.cores=ncor)
+    boot_pars = mclapply(X=indices, FUN=function(x) find_mle(div=div[x], ages=ages[x], me1=me1[x], me2=me2[x], GRAD=GRAD[x], cats=cats[x], domain=domain, breakpoint=breakpoint[x], model=model, p_starting=starting), mc.cores=ncor)
   }
   if(parallel==FALSE) {
-    boot_pars = lapply(X=indices, FUN=function(x) find_mle(div=div[x], ages=ages[x], GRAD=GRAD[x], cats=cats[x], domain=domain, breakpoint=breakpoint[x], model=model, p_starting=starting))
+    boot_pars = lapply(X=indices, FUN=function(x) find_mle(div=div[x], ages=ages[x], me1=me1[x], me2=me2[x], GRAD=GRAD[x], cats=cats[x], domain=domain, breakpoint=breakpoint[x], model=model, p_starting=starting))
   }
 
   # summarize parameter estimates

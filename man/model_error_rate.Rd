@@ -7,8 +7,9 @@ Calculate error rate in model selection
 Estimate error rates in model selection using replicate datasets simulated under a known model
 }
 \usage{
-model_error_rate(datasets, ages, sim_model, alternatives, type, GRAD = NULL, cats=NULL, 
-breakpoint = NULL, domain = NULL, threshold = 0, parallel = FALSE, cores = NULL)
+model_error_rate(datasets, ages, sim_model, alternatives, type, me1=NULL, me2=NULL, 
+  GRAD = NULL, cats=NULL, breakpoint = NULL, domain = NULL, threshold = 0, 
+  parallel = FALSE, cores = NULL)
 }
 \arguments{
   \item{datasets}{
@@ -25,6 +26,12 @@ Character vector naming alternative models to be included in the model compariso
 }
   \item{type}{
 Numeric "1" or "2". Indicates the whether test is for type 1 error rate (i.e. false rejection of true null) or type 2 error rate (i.e. failure to reject incorrect null).
+}
+  \item{me1}{
+Vector containing the measurement error (standard error of mean) for species 1s of each pair (for one species = variance/No.measurements)
+}
+  \item{me2}{
+Vector containing the measurement error (standard error of mean) for species 2s of each pair (for one species = variance/No.measurements)
 }
   \item{GRAD}{
 Vector of gradient values. Required when any model with linear gradients is included in the tests (see find_mle). Must match length of 'ages' vector. 

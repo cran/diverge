@@ -7,8 +7,8 @@ Estimate confidence intervals using bootstrap
 Calculates 95 percent confidence intervals of parameter estimates through bootstrap resampling
 }
 \usage{
-bootstrap_ci(div, ages, GRAD = NULL, cats=NULL, breakpoint = NULL, domain = NULL, 
-model, N, parallel = FALSE, cores = NULL, starting = NULL)
+bootstrap_ci(div, ages, me1=NULL, me2=NULL, GRAD = NULL, cats=NULL, breakpoint = NULL, 
+  domain = NULL, model, N, parallel = FALSE, cores = NULL, starting = NULL)
 }
 \arguments{
   \item{div}{
@@ -16,6 +16,12 @@ Vector of trait divergences for a set of lineage pairs. Calculated for each pair
 }
   \item{ages}{
 Vector containing the age (i.e. estimated time since divergence) for each pair in the dataset. IMPORTANT: div, ages, GRAD, and breakpoint vectors must be aligned such that div[i] age[i] grad[i] and breakpoint[i] represent values for the same lineage pair.
+}
+  \item{me1}{
+Vector containing the measurement error (standard error of mean) for species 1s of each pair (for one species = variance/No.measurements)
+}
+  \item{me2}{
+Vector containing the measurement error (standard error of mean) for species 2s of each pair (for one species = variance/No.measurements)
 }
   \item{GRAD}{
 Vector containing the gradient position of each pair. This is the value of a continuous variable such as latitude or body size across which parameters are hypothesized to vary. Required for models with 'linear' suffix.
