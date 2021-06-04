@@ -1,8 +1,9 @@
 re_estimator <-
 function (model, div, ages, me1= NULL, me2 = NULL, GRAD=NULL, cats=NULL, breakpoint=NULL, domain=NULL, p_starting=NULL, parallel=FALSE, cores=NULL, absolute=TRUE) {
   
-  if(model %in% c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
-    "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat") == FALSE) {
+  if(model %in% c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", "DA_null", 
+    "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat", "DA_OU", "DA_OU_linear",
+     "DA_OU_cat", "DA_BM", "DA_BM_linear", "DA_BM_cat", "OU_BM", "OU_BM_linear", "OU_BM_cat") == FALSE) {
     stop("Spell check: you've entered a model that doesn't match the models accepted by this function")
   }
 
@@ -22,7 +23,7 @@ function (model, div, ages, me1= NULL, me2 = NULL, GRAD=NULL, cats=NULL, breakpo
       rownames(estimate)=NULL
     }
   }
-  colnames(estimate) = col_names(model, ncats=length(unique(cats)))
+  #colnames(estimate) = col_names(model, ncats=length(unique(cats)))
   return(estimate)
 }
 

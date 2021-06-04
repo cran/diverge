@@ -1,7 +1,6 @@
 ### Export all functions
 # Utility functions
 export(likelihood_func)
-export(col_names)
 export(model_generator)
 export(param_grid)
 export(re_estimator)

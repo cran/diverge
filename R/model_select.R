@@ -1,36 +1,65 @@
 model_select <-
 function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=NULL, domain=NULL,   
-    models = c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
-    "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat"), 
-    starting = NULL, absolute=TRUE, parallel=FALSE, cores=NULL) {
+    models, starting = NULL, absolute=TRUE, parallel=FALSE, cores=NULL) {
   
+# warnings
   if(length(div)!=length(ages)) {
     stop("Hold up: The vectors for species pair trait differences and species pair age are of unequal length")
+  }
+  if(any(is.na(div)) | any(is.na(ages))) {
+    stop("It looks like you've got missing values for pair age or trait differences - please remove the missing indices from all input vectors for more reliable model fits")
   }
   if(is.null(starting)==FALSE) {
       if(length(models)>1 & is.list(starting)==FALSE) {
         stop("Hold up: When assessing more than one model and providing your own starting parameters, 'starting' must \n   be a list in which each element contains starting parameters for one of the models you are testing.")
       }
   }
-  if(all(models %in% c("BM_null", "OU_null", "BM_linear", "OU_linear", "OU_linear_sig", 
-    "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_cat")) == FALSE) {
-    stop("Spell check: you've entered at least one model that doesn't match the models accepted by this function")
+  if(all(models %in% c("BM_null", "BM_linear", "BM_cat", "OU_null", "OU_linear", "OU_linear_sig", 
+    "OU_cat", "DA_null", "DA_linear", "DA_cat", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_OU", "DA_OU_linear", 
+    "DA_OU_cat", "DA_BM", "DA_BM_linear", "DA_BM_cat", "OU_BM", "OU_BM_linear", "OU_BM_cat")) == FALSE) {
+    stop("Spell check: you've entered a model that doesn't match the models accepted by this function")
   }
   if(sum(is.null(me1), is.null(me2)) == 1) stop("You've supplied measurement error 
-    for just one species in the pairs; please provide 2 or 0 vectors for measurement error")
+    for just one species in the pairs; please provide either 2 or 0 vectors for measurement error")
 
-  # create shared output matrix to summarize results from likelihood searches
-  RESULTS_SUMMARY <- matrix(NA, length(models), 19)
-  colnames(RESULTS_SUMMARY) <- c("model", "logLik", "k (no. params)", "AIC", 
-        "AICc", "delta_AICc", "Akaike Weight", "alpha", "alpha_slope", "sig2", "sig2_slope", "psi_int", "psi_slope", 
-        "psi2_int", "psi2_slope", "wait_time", "convergence", "psi2", "psi3") 
-  rownames(RESULTS_SUMMARY) <- models
-  N <- length(models)
-  if (length(starting) == 1) {
-    if (is.null(starting[1])) starting[1:N] = NULL
+# create output matrix
+  res.summ = matrix(NA, nrow=10, ncol=length(models))
+  rownames(res.summ) <- c("logLik", "k (no. params)", "AIC", 
+        "AICc", "delta_AICc", "Akaike Weight", "convergence", "alpha", "sig2", "psi") 
+  colnames(res.summ) <- models
+  if(is.null(GRAD)==FALSE) {
+    res.summ = rbind(res.summ, "alpha_slope"=rep(NA,length(models)), 
+      "sig2_slope"=rep(NA,length(models)), "psi_slope"=rep(NA,length(models)))
+  }
+  if("BM_cat" %in% models | "OU_cat" %in% models | "DA_cat" %in% models | "DA_wt" %in% models 
+    | "DA_wt_linear" %in% models | "DA_bp" %in% models | "DA_bp_linear" %in% models) {
+    parmat = matrix(NA, ncol=length(models), nrow=(length(unique(cats))-1)*3)
+    rownames(parmat) = c(paste("alpha", 2:length(unique(cats)), sep="_"), 
+      paste("sig2", 2:length(unique(cats)), sep="_"), paste("psi", 2:length(unique(cats)), sep="_"))
+    res.summ = rbind(res.summ, parmat)
+  }
+  if("DA_wt" %in% models | "DA_wt_linear" %in% models) {
+    res.summ = rbind(res.summ, "wait_time"=rep(NA,length(models)))
+  }
+  if("DA_wt_linear" %in% models | "DA_bp_linear" %in% models) {
+    res.summ = rbind(res.summ, "psi2_slope"=rep(NA, length(models)))
+  }
+  if("DA_OU" %in% models | "DA_BM" %in% models | "OU_BM" %in% models) {
+    res.summ=rbind(res.summ,"prop"=rep(NA, length(models)))
+  }
+  if("DA_OU_linear" %in% models | "DA_BM_linear" %in% models | "OU_BM_linear" %in% models) {
+    res.summ=rbind(res.summ,"prop_slope"=rep(NA, length(models)))
+  }
+  if("DA_OU_cat" %in% models | "DA_BM_cat" %in% models | "OU_BM_cat" %in% models) {
+    if("DA_OU" %in% models == FALSE & "DA_BM" %in% models == FALSE & "OU_BM" %in% models == FALSE) {
+      stop("You have to include DA_OU, DA_BM, or OU_BM model in addition to the categorical model(s) you've chosen")
+    }
+    parmat2 = matrix(NA, ncol=length(models), nrow=(length(unique(cats))-1))
+    rownames(parmat2) = c(paste("prop", 2:length(unique(cats)), sep="_"))
+    res.summ=rbind(res.summ, parmat2)
   }
 
-  # select starting parameters and run the estimation for models chosen by user
+# select starting parameters and run the ML estimation for models chosen by user
   if ("BM_null" %in% models) { 
     j <- which(models == "BM_null")  
     if (is.null(starting[[j]][1]) == FALSE) {
@@ -41,12 +70,12 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "BM_null", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1) 
-    RESULTS_SUMMARY[j, 10] <- res$par[1] # beta
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1) 
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[9, j] <- res$par[1] # sig2
   }
   if ("BM_linear" %in% models) {
     j <- which(models == "BM_linear")  
@@ -58,13 +87,13 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "BM_linear", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta int
-    RESULTS_SUMMARY[j, 11] <- res$par[1] # beta slope
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[9, j] <- res$par[2] # sig2 int
+    res.summ[12, j] <- res$par[1] # sig2 slope
   }
   if ("OU_null" %in% models) {
     j <- which(models == "OU_null")  
@@ -76,13 +105,13 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "OU_null", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta 
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3,j]) + (2 * as.numeric(res.summ[2,j]) * (as.numeric(res.summ[2,j]) + 1))/(length(div) - as.numeric(res.summ[2,j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha
+    res.summ[9, j] <- res$par[2] # sig2
   }
   if ("OU_linear" %in% models) {
     j <- which(models == "OU_linear")  
@@ -94,14 +123,14 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "OU_linear", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha int
-    RESULTS_SUMMARY[j, 9] <- res$par[2] # alpha slope
-    RESULTS_SUMMARY[j, 10] <- res$par[3] # beta 
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1,j] <- -res$objective # log likelihood
+    res.summ[2,j] <- length(res$par) # no. params
+    res.summ[3,j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4,j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7,j] <- res$convergence # termination code from nlminb
+    res.summ[8,j] <- res$par[1] # alpha int
+    res.summ[9,j] <- res$par[3] # sig2
+    res.summ[11, j] <- res$par[2] # alpha slope
   }
   if ("OU_linear_sig" %in% models) {
     j <- which(models == "OU_linear_sig")  
@@ -113,14 +142,14 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "OU_linear_sig", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha
-    RESULTS_SUMMARY[j, 11] <- res$par[2] # beta slope
-    RESULTS_SUMMARY[j, 10] <- res$par[3] # beta int
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha
+    res.summ[9, j] <- res$par[3] # sig2 int
+    res.summ[12, j] <- res$par[2] # sig2 slope
   }
   if ("DA_null" %in% models) {
     j <- which(models == "DA_null")  
@@ -132,14 +161,14 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_null", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[3] # psi constant
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
   }
   if ("DA_linear" %in% models) {
     if(is.null(GRAD)) {
@@ -154,21 +183,17 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_linear", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[4] # psi_int
-    RESULTS_SUMMARY[j, 13] <- res$par[3] # psi_slope
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2 ,j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # beta constant
+    res.summ[10, j] <- res$par[4] # psi_int
+    res.summ[13, j] <- res$par[3] # psi_slope
   }
   if ("DA_cat" %in% models) {
-    if(all(cats <= 2)==FALSE) {
-      stop("Hold up! This function can only be used for up to three categorical variables, which must 
-        be coded \n with cat values of 0, 1, and 2, respectively")
-    }
     if(is.null(cats)) {
       stop("Hang on, you have to provide the cats vector")
     }
@@ -181,16 +206,262 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_cat", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[3] # psi1
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
-    RESULTS_SUMMARY[j, 18] <- res$par[4] # psi2
-    if(length(res$par)==5) RESULTS_SUMMARY[j, 19] <- res$par[5] # psi3
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi1
+    for(i in 2:length(unique(cats))) {
+      res.summ[paste("psi", i, sep="_"), j] = res$par[3+(i-1)]
+    }
+  }
+  if ("BM_cat" %in% models) {
+    if(is.null(cats)) {
+      stop("Hang on, you have to provide the cats vector")
+    }
+    j <- which(models == "BM_cat")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "BM_cat", p_starting = starting[[j]], 
+        div = div, ages= ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "BM_cat", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[9, j] <- res$par[1] # sig2_1 constant
+    for(i in 2:length(unique(cats))) {
+      res.summ[paste("sig2", i, sep="_"), j] = res$par[1+(i-1)]
+    }
+  }
+  if ("OU_cat" %in% models) {
+    if(is.null(cats)) {
+      stop("Hang on, you have to provide the cats vector")
+    }
+    j <- which(models == "OU_cat")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "OU_cat", p_starting = starting[[j]], 
+        div = div, ages= ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "OU_cat", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, cats=cats, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha1
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    for(i in 2:length(unique(cats))) {
+      res.summ[paste("alpha", i, sep="_"), j] = res$par[2+(i-1)]
+    }
+  }
+  if ("DA_OU" %in% models) {
+    j <- which(models == "DA_OU")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "DA_OU", p_starting = starting[[j]], 
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "DA_OU", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
+    res.summ["prop", j] <- res$par[4] # proportion under DA
+  }
+  if ("DA_OU_linear" %in% models) {
+    j <- which(models == "DA_OU_linear")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "DA_OU_linear", p_starting = starting[[j]], domain=domain,
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "DA_OU_linear", p_starting = NULL, div = div, domain=domain,
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
+    res.summ["prop_slope", j] <- res$par[4] # slope of proportion DA
+    res.summ["prop", j] <- res$par[5] # intercept of proportion DA
+  }
+  if ("DA_OU_cat" %in% models) {
+    if(is.null(cats)) {
+      stop("Hang on, you have to provide the cats vector")
+    }
+    j <- which(models == "DA_OU_cat")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "DA_OU_cat", p_starting = starting[[j]], 
+        div = div, ages= ages, me1 = me1, me2= me2, cats=cats, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "DA_OU_cat", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, cats=cats, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
+    res.summ["prop", j] <- res$par[4] # proportion under DA in cat 1
+    for(i in 2:length(unique(cats))) {
+      res.summ[paste("prop", i, sep="_"), j] = res$par[4+(i-1)]
+    }
+  }
+  if ("DA_BM" %in% models) {
+    j <- which(models == "DA_BM")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "DA_BM", p_starting = starting[[j]], 
+        div = div, ages = ages, me1 = me1, me2= me2, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "DA_BM", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
+    res.summ["prop", j] <- res$par[4] # proportion under DA
+  }
+  if ("DA_BM_linear" %in% models) {
+    j <- which(models == "DA_BM_linear")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "DA_BM_linear", p_starting = starting[[j]], domain=domain,
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "DA_BM_linear", p_starting = NULL, div = div, domain=domain,
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
+    res.summ["prop_slope", j] <- res$par[4] # slope of proportion DA
+    res.summ["prop", j] <- res$par[5] # intercept of proportion DA
+  }
+  if ("DA_BM_cat" %in% models) {
+    if(is.null(cats)) {
+      stop("Hang on, you have to provide the cats vector")
+    }
+    j <- which(models == "DA_BM_cat")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "DA_BM_cat", p_starting = starting[[j]], 
+        div = div, ages= ages, me1 = me1, me2= me2, cats=cats, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "DA_BM_cat", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, cats=cats, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi constant
+    res.summ["prop", j] <- res$par[4] # proportion under DA in cat 1
+    for(i in 2:length(unique(cats))) {
+      res.summ[paste("prop", i, sep="_"), j] = res$par[4+(i-1)]
+    }
+  }
+  if ("OU_BM" %in% models) {
+    j <- which(models == "OU_BM")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "OU_BM", p_starting = starting[[j]], 
+        div = div, ages = ages, me1 = me1, me2= me2, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "OU_BM", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ["prop", j] <- res$par[3] # proportion under OU
+  }
+  if ("OU_BM_linear" %in% models) {
+    j <- which(models == "OU_BM_linear")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "OU_BM_linear", p_starting = starting[[j]], domain=domain,
+        div = div, ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "OU_BM_linear", p_starting = NULL, div = div, domain=domain,
+        ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ["prop_slope", j] <- res$par[3] # slope of proportion OU
+    res.summ["prop", j] <- res$par[4] # intercept of proportion OU
+  }
+  if ("OU_BM_cat" %in% models) {
+    if(is.null(cats)) {
+      stop("Hang on, you have to provide the cats vector")
+    }
+    j <- which(models == "OU_BM_cat")
+    if (is.null(starting[[j]][1]) == FALSE) {
+      res <- find_mle(model = "OU_BM_cat", p_starting = starting[[j]], 
+        div = div, ages= ages, me1 = me1, me2= me2, cats=cats, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    if (is.null(starting[[j]][1])) {
+      res <- find_mle(model = "OU_BM_cat", p_starting = NULL, div = div, 
+        ages = ages, me1 = me1, me2= me2, cats=cats, absolute=absolute, parallel=parallel, cores=cores)
+    }
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par) # no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ["prop", j] <- res$par[3] # proportion under OU in cat 1
+    for(i in 2:length(unique(cats))) {
+      res.summ[paste("prop", i, sep="_"), j] = res$par[3+(i-1)]
+    }
   }
   if ("DA_wt" %in% models) {
     j <- which(models == "DA_wt")
@@ -202,16 +473,16 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_wt", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par)# no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[3] # psi1 constant
-    RESULTS_SUMMARY[j, 14] <- res$par[4] # psi2 constant
-    RESULTS_SUMMARY[j, 16] <- res$par[5] # wait time 
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi1 constant
+    res.summ["psi_2", j] <- res$par[4] # psi2 constant
+    res.summ["wait_time", j] <- res$par[5] # wait time 
   }
   if ("DA_bp" %in% models) {
     j <- which(models == "DA_bp")
@@ -223,15 +494,15 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_bp", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, breakpoint=breakpoint, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[3] # psi1_int 
-    RESULTS_SUMMARY[j, 14] <- res$par[4] # psi2_int
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[3] # psi1 constant
+    res.summ["psi_2", j] <- res$par[4] # psi2 constant
   }
   if ("DA_wt_linear" %in% models) {
     j <- which(models == "DA_wt_linear")
@@ -243,18 +514,18 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_wt_linear", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2]) 
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[4] # psi1_int 
-    RESULTS_SUMMARY[j, 13] <- res$par[5] # psi1_slope
-    RESULTS_SUMMARY[j, 14] <- res$par[6] # psi2_int
-    RESULTS_SUMMARY[j, 15] <- res$par[7] # psi2_slope
-    RESULTS_SUMMARY[j, 16] <- res$par[3] # wait time
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[5] # psi1 constant
+    res.summ["psi_slope", j] <- res$par[4] # psi1_slope
+    res.summ["psi_2", j] <- res$par[7] # psi2 constant
+    res.summ["wait_time", j] <- res$par[3] # wait time 
+    res.summ["psi2_slope", j] <- res$par[6] # psi2_slope
   }
   if ("DA_bp_linear" %in% models) {
     j <- which(models == "DA_bp_linear")
@@ -266,25 +537,24 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
       res <- find_mle(model = "DA_bp_linear", p_starting = NULL, div = div, 
         ages = ages, me1 = me1, me2= me2, GRAD = GRAD, breakpoint=breakpoint, domain=domain, absolute=absolute, parallel=parallel, cores=cores)
     }
-    RESULTS_SUMMARY[j, 2] <- -res$objective # log likelihood
-    RESULTS_SUMMARY[j, 3] <- length(res$par) # no. params
-    RESULTS_SUMMARY[j, 4] <- 2 * as.numeric(RESULTS_SUMMARY[j,3]) - 2 * as.numeric(RESULTS_SUMMARY[j, 2])
-    RESULTS_SUMMARY[j, 5] <- as.numeric(RESULTS_SUMMARY[j,4]) + (2 * as.numeric(RESULTS_SUMMARY[j, 3]) * (as.numeric(RESULTS_SUMMARY[j,3]) + 1))/(length(div) - as.numeric(RESULTS_SUMMARY[j, 3]) - 1)
-    RESULTS_SUMMARY[j, 8] <- res$par[1] # alpha constant
-    RESULTS_SUMMARY[j, 10] <- res$par[2] # beta constant
-    RESULTS_SUMMARY[j, 12] <- res$par[4] # psi1_int 
-    RESULTS_SUMMARY[j, 13] <- res$par[5] # psi1_slope
-    RESULTS_SUMMARY[j, 14] <- res$par[6] # psi2_int
-    RESULTS_SUMMARY[j, 15] <- res$par[7] # psi2_slope
-    RESULTS_SUMMARY[j, 17] <- res$convergence # termination code from nlminb
+    res.summ[1, j] <- -res$objective # log likelihood
+    res.summ[2, j] <- length(res$par)# no. params
+    res.summ[3, j] <- 2 * as.numeric(res.summ[2, j]) - 2 * as.numeric(res.summ[1, j])
+    res.summ[4, j] <- as.numeric(res.summ[3, j]) + (2 * as.numeric(res.summ[2, j]) * (as.numeric(res.summ[2, j]) + 1))/(length(div) - as.numeric(res.summ[2, j]) - 1)
+    res.summ[7, j] <- res$convergence # termination code from nlminb
+    res.summ[8, j] <- res$par[1] # alpha constant
+    res.summ[9, j] <- res$par[2] # sig2 constant
+    res.summ[10, j] <- res$par[4] # psi1 constant
+    res.summ["psi_slope", j] <- res$par[3] # psi1_slope
+    res.summ["psi_2", j] <- res$par[6] # psi2 constant
+    res.summ["psi2_slope", j] <- res$par[5] # psi2_slope
   }
 
   # summarize results in output matrix
-  RESULTS_SUMMARY[which(RESULTS_SUMMARY[,17]>0),5]=NA # converts AICc to NA for models in which convergence wasn't succesful
-  RESULTS_SUMMARY[,6] = RESULTS_SUMMARY[,5] - min(RESULTS_SUMMARY[which(is.na(RESULTS_SUMMARY[,5])==FALSE),5]) # delta AICc calculated from only those models with succesful convergence
-  RESULTS_SUMMARY[,7] = exp(-0.5*RESULTS_SUMMARY[,6])/sum(exp(-0.5*RESULTS_SUMMARY[,6]),na.rm=TRUE) # Akaike weights calc'd from deltAICc
-  RESULTS_SUMMARY <- RESULTS_SUMMARY[, -1, drop = FALSE]
-  RESULTS_SUMMARY <- t(RESULTS_SUMMARY)
-  RESULTS_SUMMARY=apply(X=RESULTS_SUMMARY, MARGIN=2, FUN=round, digits=5)
-  return(RESULTS_SUMMARY)
+  #res.summ[res.summ[,"convergence"]>0,]=NA 
+  res.summ["AICc",][res.summ["convergence",]>0]=NA # converts AICc to NA for models in which convergence wasn't succesful
+  res.summ[5,] = res.summ[4,] - min(res.summ[4,], na.rm=TRUE) # delta AICc calculated from only those models with succesful convergence
+  res.summ[6,] = exp(-0.5*res.summ[5,])/sum(exp(-0.5*res.summ[5,]),na.rm=TRUE) # Akaike weights calc'd from deltAICc
+  res.summ = apply(res.summ, MARGIN=2, FUN=round, digits=5)
+  return(res.summ)
 }

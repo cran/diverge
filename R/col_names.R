@@ -8,9 +8,16 @@ function(model, ncats=NULL) {
   if(model == "OU_linear") res=c("alpha_int", "alpha_slope", "sig2")
   if(model == "OU_linear_sig") res=c("alpha", "sig2_slope", "sig2_int")
   if(model == "DA_linear") res=c("alpha", "sig2", "psi_slope", "psi_int")
-  if(is.null(ncats)==FALSE) {
-    if(model == "DA_cat" & ncats==2) res=c("alpha", "sig2", "psi1", "psi2")
-    if(model == "DA_cat" & ncats==3) res=c("alpha", "sig2", "psi1", "psi2", "psi3")
+  if(model == "BM_cat") {
+    res=paste("sig2",1:ncats,sep="")
+  }
+  if(model == "OU_cat") {
+    alphas=paste("alpha",1:ncats,sep="")
+    res=c("sig2", alphas)
+  }
+  if(model == "DA_cat") {
+    psis=paste("psi",1:ncats,sep="")
+    res=c("alpha","sig2",psis)
   }
   if(model == "DA_wt") res=c("alpha", "sig2", "psi1", "psi2", "wt")
   if(model == "DA_bp") res=c("alpha", "sig2", "psi1", "psi2")
