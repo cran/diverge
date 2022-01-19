@@ -27,7 +27,7 @@ The estimated crown age in millions of years.
 extract_sisters takes a phylo object and identifies all sister pairs by name. If sis_age=TRUE, then extract_sisters also estimates the age of each pair (in Ma) based on branch lengths and either 1) a given (constant) molecular clock, or 2) an estimate for the crown age. If no molecular clock rate or crown age is supplied by the user, the branch lengths are assumed to represent time in Ma. CAUTION: age estimates will be returned for any tree that contains branch lengths, so it's up to the user to ensure that the tree is ultrametric.
 }
 \value{
-Returns a data frame in which each row corresponds to a sister pair and contains the index of the parental node, the taxon names for the two lineages, if sis_age=TRUE, the estimated divergence time (i.e. age) for that pair.
+Returns a data frame in which each row corresponds to a sister pair and contains the taxon names for the two lineages, and if sis_age=TRUE, then the estimated divergence time (i.e. age) for that pair.
 }
 \author{
 Sean A.S. Anderson

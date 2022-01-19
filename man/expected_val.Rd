@@ -7,10 +7,9 @@ Expected value through time
 Calculate and plot expected value of trait divergence through time
 }
 \usage{
-expected_val(model, sig2, alpha = NULL, psi = NULL, psi2 = NULL, wt = NULL, 
-  time_span = c(0, 10), quantile = FALSE, plot = FALSE, labels = TRUE, 
-  exval_col = "blue", quant_col = "black", exval_col2 = "springgreen2", 
-  quant_col2= "black", exval_lwd = 2, quant_lwd = 1, ...)
+expected_val(model, sig2, alpha = NULL, psi = NULL, time_span = c(0, 10), 
+  quantile = FALSE, plot = FALSE, labels = TRUE, bm_col = "darkgoldenrod1", 
+  ou_col = "firebrick2", da_col = "navy", exval_lwd = 5, ylim = NULL, ...)
 }
 \arguments{
   \item{model}{
@@ -25,12 +24,6 @@ Value of the alpha parameter. Required for all OU and DA models.
   \item{psi}{
 Value of psi parameter. Required for DA models. NOTE: if using a breakpoint or wait time model, this is the psi for the first evolutionary epoch
 }
-  \item{psi2}{
-Value of psi for the second evolutionary epoch in breakpoint or wait time DA models.
-}
-  \item{wt}{
-Value representing the shared wait time to a shift in the adaptive regime (aka an epoch shift)
-}
   \item{time_span}{
 The time after initial divergence at which to calculate the expected value. If time_span is a vector lf length 2, the expectation is calculated continuously between the two times. If time_span is any other length, the expected value is calculated only at the given times. Defaults to c(0,10)
 }
@@ -43,30 +36,27 @@ Logical indicating whether to plot the expected values through time. If quantile
   \item{labels}{
 Logical indicating whether x and y axes are to be labelled.
 }
-  \item{exval_col}{
-Color of the line showing expected value through time. Defaults to red.
+  \item{bm_col}{
+Color of the line (and shaded if quantile=TRUE) area showing expected value through time under a BM model. 
 }
-  \item{quant_col}{
-Color of the lines showing the 10-95th quantiles through time. Defaults to black.
+  \item{ou_col}{
+Color of the line (and shaded if quantile=TRUE) area showing expected value through time under an OU model. 
 }
-  \item{exval_col2}{
-Color of the line showing expected value through time of the simpler model in a mixture model (OU in a DA-OU model or BM in a OU-BM model)should be plotted. Defaults to "springgreen2".
-}
-  \item{quant_col2}{
-Color of the lines showing the 10-95th quantiles through time of the simpler model in a mixture model (OU in a DA-OU model or BM in a OU-BM model)should be plotted. Defaults to black.
+  \item{da_col}{
+Color of the line (and shaded if quantile=TRUE) area showing expected value through time under an OU model. 
 }
   \item{exval_lwd}{
-Line width in which the line showing the expected value through time should be plotted. Defaults to 1.
+Width in which the line showing the expected value through time should be plotted. Defaults to 5.
 }
-  \item{quant_lwd}{
-Line width in which the lines showing the 10-95th quantiles through time should be plotted. Defaults to 1.
+  \item{ylim}{
+Custom y-axis for graph in the form 'ylim = c(miny, maxy)'
 }
   \item{...}{
 Additional arguments to be passed to the 'plot' function for custom visualization.
 }
 }
 \details{
-Calculates and plots the expected value of continuous trait divergence under different models of trait evolution. Time begins when lineages initially depart form a common ancestor. If users provide upper and lower bounds for time_span, then that span is divided into 10,001 time steps at which expectations are calculated to approximate a continuous tracking of expectation through time. Expectations for the 10th-95th quantile can also be estimated and plotted to visualize how the distribution of trait divergence changes. 
+Calculates and plots the expected value of continuous trait divergence under different models of trait evolution. Time begins when lineages initially depart form a common ancestor. If users provide upper and lower bounds for time_span, then that span is divided into 10,001 time steps at which expectations are calculated to approximate a continuous tracking of expectation through time. Expectations for the 2.5th-97.5th quantile can also be estimated and 95 percent confidence intervals plotted to visualize how the distribution of trait divergence changes. 
 
 IMPORTANT: Not all models can be selected for this function. The expected value of divergence under one of the "linear" models, for instance, would be different for each position on a continuous gradient and thus can't be calculated or plotted in this way. Acceptable models are ("BM_null", "OU_null", "DA_null", "DA_OU", "DA_BM", "OU_BM").
 }
@@ -96,7 +86,7 @@ sig2 = 0.2
 alpha = 0.8
 psi = 0.3
 exval = expected_val("DA_null", sig2=sig2, alpha=alpha, psi=psi, time_span=c(0,8), quantile=TRUE, 
-	plot=TRUE, exval_col="green", exval_lwd = 4, ylim = c(0, 3), axes=FALSE, labels=FALSE)
+	plot=TRUE, da_col="green", exval_lwd = 4, ylim = c(0, 3), axes=FALSE, labels=FALSE)
 box()
 axis(1, labels=NA)
 axis(1, lwd = 0, line = -0.6)
@@ -113,6 +103,6 @@ psi = 1
 exval = expected_val(model="DA_OU", sig2=sig2, alpha=alpha, psi=psi, time_span=c(0,8),
   quantile=TRUE, plot=TRUE)
 # add a legend
-legend("topleft", legend=c("ExVal DA", "ExVal OU"), lwd=2, col=c("springgreen2", "blue"), 
+legend("topleft", legend=c("ExVal DA", "ExVal OU"), lwd=2, col=c("navy", "firebrick2"), 
     bty="n", cex=0.8)
 }

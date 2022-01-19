@@ -12,8 +12,8 @@ This package can be used to study the dynamics of continuous trait divergence in
 \tabular{ll}{
 Package: \tab diverge\cr
 Type: \tab Package\cr
-Version: \tab 1.0.7\cr
-Date: \tab 2021-02-4\cr
+Version: \tab 2.0.4\cr
+Date: \tab 2022-01-18\cr
 License: \tab GPL (>= 2) \cr
 }
 

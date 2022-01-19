@@ -7,7 +7,10 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
     stop("Hold up: The vectors for species pair trait differences and species pair age are of unequal length")
   }
   if(any(is.na(div)) | any(is.na(ages))) {
-    stop("It looks like you've got missing values for pair age or trait differences - please remove the missing indices from all input vectors for more reliable model fits")
+    stop("It looks like you've got missing values for pair age or trait differences - please remove the missing indices from all input vectors")
+  }
+  if(any(is.na(GRAD))) {
+    stop("It looks like you've got missing values for the gradient variable - please remove the missing value(s) and remove the corresponding values for pair age and trait divergence (and any other input vector)")
   }
   if(is.null(starting)==FALSE) {
       if(length(models)>1 & is.list(starting)==FALSE) {
@@ -48,7 +51,7 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
     res.summ=rbind(res.summ,"prop"=rep(NA, length(models)))
   }
   if("DA_OU_linear" %in% models | "DA_BM_linear" %in% models | "OU_BM_linear" %in% models) {
-    res.summ=rbind(res.summ,"prop_slope"=rep(NA, length(models)))
+    res.summ=rbind(res.summ,"prop"=rep(NA, length(models)),"prop_slope"=rep(NA, length(models)))
   }
   if("DA_OU_cat" %in% models | "DA_BM_cat" %in% models | "OU_BM_cat" %in% models) {
     if("DA_OU" %in% models == FALSE & "DA_BM" %in% models == FALSE & "OU_BM" %in% models == FALSE) {

@@ -92,10 +92,9 @@ function(model, p_starting=NULL, div, ages, me1 = NULL, me2 = NULL, GRAD = NULL,
     } else {
       res = suppressWarnings(nlminb(start=p, objective = likelihood_func, model = model, div = div, ages = ages, me1 = me1, me2 = me2, cats=cats, GRAD=GRAD, bp=breakpoint, absolute=absolute, lower=lim, control=list("eval.max"=1000, "iter.max"=5000)))
     }
-    if (round(res$objective, 4) > round(results_ordered[1, ncol(results_ordered)], 4)) {
+    if (all(results[,ncol(results)]>0) | round(res$objective, 4) > round(results_ordered[1, ncol(results_ordered)], 4)) {
        warning(paste(model,": final result is not MLE", sep=""))
     }
     names(res$par) = colnames(par_matrix)[-length(colnames(par_matrix))]
   return(res)
 }
-

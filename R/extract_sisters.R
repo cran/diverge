@@ -49,10 +49,10 @@ function(tree, sis_age=FALSE, mol_clock=NULL, crown_age=NULL) {
       pair_ages = cbind(tree_node=pair_node, pair_age=tree$edge.length[edge.index]/rate)
     }
   # wrap everything up in a dataframe
-  res = data.frame(pair_ages, sp1 = sp_names[,1], sp2 = sp_names[,2])
+  res = data.frame(sp1 = sp_names[,1], sp2 = sp_names[,2], pair_ages, stringsAsFactors=FALSE)
   } else {
   # wrap everything up in a dataframe
-  res = data.frame(tree_node=pair_node, sp1 = sp_names[,1], sp2 = sp_names[,2])
+  res = data.frame(sp1 = sp_names[,1], sp2 = sp_names[,2], stringsAsFactors=FALSE)
   }
   return(res)
 }
