@@ -558,6 +558,6 @@ function (div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=N
   res.summ["AICc",][res.summ["convergence",]>0]=NA # converts AICc to NA for models in which convergence wasn't succesful
   res.summ[5,] = res.summ[4,] - min(res.summ[4,], na.rm=TRUE) # delta AICc calculated from only those models with succesful convergence
   res.summ[6,] = exp(-0.5*res.summ[5,])/sum(exp(-0.5*res.summ[5,]),na.rm=TRUE) # Akaike weights calc'd from deltAICc
-  res.summ = apply(res.summ, MARGIN=2, FUN=round, digits=5)
+  res.summ = apply(res.summ, MARGIN=2, FUN=round, digits=8) 
   return(res.summ)
 }

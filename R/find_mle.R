@@ -25,19 +25,19 @@ function(model, p_starting=NULL, div, ages, me1 = NULL, me2 = NULL, GRAD = NULL,
 
     # Define boundaries for the parameters in each model
     if (model=="BM_null" | model=="OU_null" | model=="DA_null" | model=="DA_wt" | model=="DA_bp" | 
-        model=="DA_cat" | model=="BM_cat" | model=="OU_cat") lim=1e-5
-    if (model == "DA_OU" | model == "DA_BM") lim=c(rep(1e-5,3),2/length(div), c(rep(Inf,3),1))
-    if (model == "OU_BM") lim=c(rep(1e-5, 2), 2/length(div), rep(Inf, 2), 1)
-    if (model == "DA_OU_linear" | model == "DA_BM_linear") lim=c(rep(1e-5,3),-Inf, 2/length(div), c(rep(Inf,4),1))
-    if (model == "OU_BM_linear") lim=c(rep(1e-5,2),-Inf, 2/length(div), c(rep(Inf,3),1))
-    if (model == "DA_OU_cat" | model == "DA_BM_cat") lim=c(rep(1e-5,3), rep(0,length(unique(cats))), rep(Inf, 3), rep(1, length(unique(cats))))
-    if (model == "OU_BM_cat") lim=c(rep(1e-5,2), rep(0,length(unique(cats))), rep(Inf, 2), rep(1, length(unique(cats))))
-    if (model=="BM_linear") lim=c(-Inf, 1e-5)
-    if (model=="OU_linear") lim=c(1e-5, -Inf, 1e-5)
-    if (model=="OU_linear_sig") lim=c(1e-5, -Inf, 1e-5)
-    if (model=="DA_linear") lim=c(rep(1e-5, 2), -Inf, 1e-5)
-    if (model=="DA_wt_linear") lim=c(rep(1e-5, 3), rep(c(-Inf, 1e-5),2))
-    if (model=="DA_bp_linear") lim=c(rep(1e-5,2), rep(c(-Inf, 1e-5),2))
+        model=="DA_cat" | model=="BM_cat" | model=="OU_cat") lim=1e-8
+    if (model == "DA_OU" | model == "DA_BM") lim=c(rep(1e-8,3),2/length(div), c(rep(Inf,3),1))
+    if (model == "OU_BM") lim=c(rep(1e-8, 2), 2/length(div), rep(Inf, 2), 1)
+    if (model == "DA_OU_linear" | model == "DA_BM_linear") lim=c(rep(1e-8,3),-Inf, 2/length(div), c(rep(Inf,4),1))
+    if (model == "OU_BM_linear") lim=c(rep(1e-8,2),-Inf, 2/length(div), c(rep(Inf,3),1))
+    if (model == "DA_OU_cat" | model == "DA_BM_cat") lim=c(rep(1e-8,3), rep(0,length(unique(cats))), rep(Inf, 3), rep(1, length(unique(cats))))
+    if (model == "OU_BM_cat") lim=c(rep(1e-8,2), rep(0,length(unique(cats))), rep(Inf, 2), rep(1, length(unique(cats))))
+    if (model=="BM_linear") lim=c(-Inf, 1e-8)
+    if (model=="OU_linear") lim=c(1e-8, -Inf, 1e-8)
+    if (model=="OU_linear_sig") lim=c(1e-8, -Inf, 1e-8)
+    if (model=="DA_linear") lim=c(rep(1e-8, 2), -Inf, 1e-8)
+    if (model=="DA_wt_linear") lim=c(rep(1e-8, 3), rep(c(-Inf, 1e-8),2))
+    if (model=="DA_bp_linear") lim=c(rep(1e-8,2), rep(c(-Inf, 1e-8),2))
     
     # search likelihood space from the various parameter starting points
     if (parallel==FALSE) {

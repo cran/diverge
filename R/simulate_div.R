@@ -316,7 +316,8 @@ function(model, pars, ages, me_prop=NULL, GRAD=NULL, cats=NULL, breakpoint=NULL,
     }
   }
   if(is.null(me_prop)==FALSE) var = var + 2*(me_prop*var/2)^2
-  if(Nsets == 1) EDsisters = truncnorm::rtruncnorm(n=length(ages), a=0, mean=u2, sd=sqrt(var))
-  if(Nsets > 1) EDsisters = as.list(as.data.frame(replicate(n=Nsets, expr=truncnorm::rtruncnorm(n=length(ages), a=0, mean=u2, sd=sqrt(var)))))
+  if(Nsets == 1) EDsisters = abs(rnorm(n=length(ages),mean=u2, sd=sqrt(var)))
+  if(Nsets > 1) EDsisters = as.list(as.data.frame(replicate(n=Nsets, expr=abs(rnorm(n=length(ages), mean=u2, sd=sqrt(var))))))
   return(EDsisters)
 }
+

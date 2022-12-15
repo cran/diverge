@@ -78,13 +78,16 @@ exval = expected_val(model="DA_null", sig2=sig2, alpha=alpha, psi=psi, time_span
 sig2 = 0.2
 alpha = 0.8
 psi = 0.3
+\donttest{
 exval = expected_val(model="DA_null", sig2=sig2, alpha=alpha, psi=psi, time_span=c(0,8),
   quantile=TRUE, plot=TRUE)
+}
   
 # Ex. 3. same as above but with customized graphical parameters
 sig2 = 0.2
 alpha = 0.8
 psi = 0.3
+\donttest{
 exval = expected_val("DA_null", sig2=sig2, alpha=alpha, psi=psi, time_span=c(0,8), quantile=TRUE, 
 	plot=TRUE, da_col="green", exval_lwd = 4, ylim = c(0, 3), axes=FALSE, labels=FALSE)
 box()
@@ -94,15 +97,18 @@ axis(2, labels = NA)
 axis(2, lwd = 0, line = -0.6)
 title(line = 1.9, xlab = "Custom X Axis Title")
 title(line = 1.9, ylab = "Custom Y AXis Title")
+}
 
 # Ex. 4. calculate and plot expected trait divergence and expected quantiles through time over 8my 
 # under a DA-OU mixture model
 sig2 = 0.05
 alpha = 0.8
 psi = 1
+\donttest{
 exval = expected_val(model="DA_OU", sig2=sig2, alpha=alpha, psi=psi, time_span=c(0,8),
   quantile=TRUE, plot=TRUE)
 # add a legend
 legend("topleft", legend=c("ExVal DA", "ExVal OU"), lwd=2, col=c("navy", "firebrick2"), 
     bty="n", cex=0.8)
+  }
 }

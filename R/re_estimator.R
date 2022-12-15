@@ -7,11 +7,11 @@ function (model, div, ages, me1= NULL, me2 = NULL, GRAD=NULL, cats=NULL, breakpo
     stop("Spell check: you've entered a model that doesn't match the models accepted by this function")
   }
 
-  if(class(div)=="numeric") { 
+  if(is.numeric(div)) { 
     res = find_mle(model=model, p_starting = p_starting, div=div, ages=ages, GRAD=GRAD, cats=cats, breakpoint=breakpoint, domain=domain, absolute=absolute)
     estimate=matrix(res$par, nrow=1)
   }
-  if(class(div)=="list") {
+  if(is.list(div)) {
     if(parallel==TRUE) {
       if(is.null(cores)) ncor = detectCores()
       if(is.null(cores)==FALSE) ncor = cores

@@ -12,7 +12,7 @@ simulate_div(model, pars, ages, me_prop=NULL, GRAD = NULL, cats=NULL,
 }
 \arguments{
   \item{model}{
-Character string defining one of 11 models of trait divergence (options: "BM_null", "BM_linear", "OU_null", "OU_linear", "DA_null", "DA_linear", "DA_cat", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear"). See model_select for model descriptions.
+Character string defining one of 11 models of trait divergence (options: "BM_null", "BM_linear", "OU_null", "OU_linear", "DA_null", "DA_linear", "DA_cat", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_OU", "DA_OU_linear", "DA_OU_cat", "DA_BM", "DA_BM_linear", "DA_BM_cat", "OU_BM", "OU_BM_linear", "OU_BM_cat"). See model_select for model descriptions.
 }
   \item{pars}{
 Vector of model parameters to use in sumulation. Parameters must be in the correct order in the vector for each model. The parameter orders are \cr

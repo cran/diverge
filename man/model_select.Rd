@@ -4,7 +4,7 @@
 Select the best fit model of trait divergence
 }
 \description{
-Compare likelihood and AICc support for up to ten evolutionary models given a dataset.
+Compare likelihood and AICc support among several models of sister pair trait divergence given a sister pair dataset.
 }
 \usage{
 model_select(div, ages, me1 = NULL, me2 = NULL, GRAD =NULL, cats=NULL, breakpoint=NULL, 
@@ -39,7 +39,7 @@ Vector of length 2 defining the low and high ends of the gradient domain. Essent
 Character vector naming models for which to compare likelihood estimates and AICc values (options: "BM_null", "BM_linear", "BM_cat", "OU_null", "OU_linear", "OU_linear_sig", "OU_cat", "DA_null", "DA_linear", "DA_cat", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_OU", "DA_OU_linear", "DA_OU_cat", "DA_BM", "DA_BM_linear", "DA_BM_cat", "OU_BM", "OU_BM_linear", "OU_BM_cat"). See find_mle for model descriptions.
 }
   \item{starting}{
-Optional list in which each element is a matrix of customized parameter from which to launch likelihood searches. The list must be ordered such that the n'th element contains the starting parameter values for the n'th model named in the "models" argument. The nth elements in the list must match the structure required for starting parameters for the nth model in "models" (see the model descriptions in find_mle for details). If starting=NULL, default starting values are used. 
+Optional argument for providing customized set of parameters from which to launch likelihood searches. If only one model is specified in "models", then 'starting' should be a matrix in which each row is a complete set of starting parameters for that given model (see parameter requirements for each model below). If more than one model is specific in "models", then ''starting'' must be a list in which each element is a matrix of customized parameter values. The list must be ordered such that the nth element contains the starting parameter values for the nth model named in the "models" argument. The nth elements in the list must match the structure required for starting parameters for the nth model in "models". If starting=NULL, default starting values are used. 
 }
   \item{absolute}{
 Logical indicating whether 'div' represents absolute value of trait divergence or the raw divergence values.
@@ -56,6 +56,8 @@ OVERVIEW \cr
 model_select estimates parameters and compares the fit of up to 20 evolutionary models to lineage-pair datasets based on likelihood, AIC, and AICc. It is the key function in this package for most users. We strongly recommend that users define the models they want to fit to the data (i.e. only those models that are relevant to distinguishing among hypotheses of interest) rather than simply fitting all models (the default option).
 
 In most cases, if you find that a model fails to fit (e.g. NaN is being returned for likelihood for one or more models), then the default starting parameters are not well-suited to your dataset and you will need to make a list of custom starting parameters (see 'starting' argument above).
+
+Note on troubleshooting: if models fail to converge or return nonsensical results, it is usually the case that the default starting parameter values are no good (i.e. the true parameter values are well outside the default values). Start your troubleshooting by creating custom starting parameter matrices for the different models (see 'starting' argument above).
 
 RUN TIME CONSIDERATIONS \cr
 model_select calls the underlying function find_mle, which launches likelihood searches from a large set of starting parameter values to avoid getting stuck on local optima (see find_mle for more details). This set of starting parameter values grows rapidly with parameter number, so model comparisons that include the most complex evolutionary models (esp DA_wt, DA_wt_linear) can take several minutes. We recommend using the parallel=TRUE option where resources allow when including any model more complex than DA_null. Users can define their own starting parameter sets but should keep in mind this tradeoff between run time and the breadth of parameter space through which to search. 

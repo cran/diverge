@@ -185,7 +185,9 @@ function (parameters, model, div, ages, me1 = NULL, me2 = NULL, cats=NULL, GRAD=
       prop = parameters[4] # this must be limited to be between zero and one!
       u_DA = psi*(1-exp(-A*ages)) # U_OU is zero 
       var = sig2*(1-exp(-2*A*ages))/A #(var is unrelated to theta or psi and thus same for DA and OU)
-      if(is.null(me1)==FALSE) var = var + me1^2 + me2^2
+      if(is.null(me1)==FALSE) {
+      	var = var + me1^2 + me2^2
+      }
       if(absolute==TRUE){
         dens_DA = dnorm(div, mean=u_DA, sd=sqrt(var)) + dnorm(div, mean=-u_DA, sd=sqrt(var))
         dens_OU = 2*dnorm(div, mean=0, sd=sqrt(var))

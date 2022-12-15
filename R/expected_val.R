@@ -13,7 +13,7 @@ function (model, sig2, alpha = NULL, psi = NULL, time_span = c(0, 10),
         time <- time_span
     }
     if (length(time_span) == 2) {
-        time = seq(0, time_span[2], (time_span[2]/10000))
+        time = seq(0, time_span[2], (time_span[2]/1000))
     }
     if(model == "BM_null") {
         V <- sig2 * time * 2
@@ -54,20 +54,33 @@ function (model, sig2, alpha = NULL, psi = NULL, time_span = c(0, 10),
     }
     if (quantile == TRUE) {
         qs = c(0.025, seq(0.1, 0.9, 0.1), 0.975) # the ends now give you confidence intervals
-        quantiles = lapply(qs, FUN = truncnorm::qtruncnorm, a = 0, mean = u, sd = sqrt(V))
-        res <- matrix(NA, length(time), 13)
+        #quantiles = lapply(qs, FUN = truncnorm::qtruncnorm, a = 0, mean = u, sd = sqrt(V))
+        #quantiles = lapply(qs, function(x) quantile(abs(rnorm(n=10000, mean=u, sd=sqrt(V))), probs=x))
+        # NOTE: FOR SMOOTHER CONFIDENCE INTERVAL EDGES, SET ncol=100000 in the appropriate spots below
+        dists = matrix(NA, nrow=length(V), ncol=10000)
+        for(i in 1:length(time)) dists[i,] = abs(rnorm(10000,mean=u[i], sd=sqrt(V[i])))
+        quantiles = matrix(NA, nrow=length(V), ncol=length(qs))
+        for(i in 1:length(time)) quantiles[i,] = quantile(dists[i,], probs=qs)
+        res = cbind(time, exdiv, quantiles)
+        #res <- matrix(NA, length(time), 13)
         colnames(res) <- c("time", "Expectation", "q025", "q10","q20", 
             "q30", "q40", "q50", "q60", "q70", "q80", "q90", 
             "q975")
-        res[, 1] <- time
-        res[, 2] <- exdiv
-        for (i in 3:13) res[, i] = quantiles[[i - 2]]
+        #res[, 1] <- time
+        #res[, 2] <- exdiv
+        #for (i in 3:13) res[, i] = quantiles[[i - 2]]
         if(model %in% c("DA_OU", "DA_BM", "OU_BM")) {
-            quantiles2 = lapply(qs, FUN = truncnorm::qtruncnorm, a = 0, mean = u2, sd = sqrt(V2))
-            res2 = res[,-1]
+            #quantiles2 = lapply(qs, FUN = truncnorm::qtruncnorm, a = 0, mean = u2, sd = sqrt(V2))
+            #quantiles2 = lapply(qs, function(x) quantile(abs(rnorm(n=100000, mean=u2, sd=sqrt(V2))), probs=x))
+            dists2 = matrix(NA, nrow=length(V2), ncol=10000)
+            for(i in 1:length(time)) dists2[i,] = abs(rnorm(10000,mean=u2[i], sd=sqrt(V2[i])))
+            quantiles2 = matrix(NA, nrow=length(V2), ncol=length(qs))
+            for(i in 1:length(time)) quantiles2[i,] = quantile(dists2[i,], probs=qs)
+            res2=cbind(exdiv2,quantiles2)
+            #res2 = res[,-1]
             colnames(res2) = paste("model2_", colnames(res)[-1], sep="")
-            res2[,1] <- exdiv2
-            for (i in 2:12) res2[, i] = quantiles2[[i - 1]]
+            #res2[,1] <- exdiv2
+            #for (i in 2:12) res2[, i] = quantiles2[[i - 1]]
             res = cbind(res, res2)
         }
     } else {

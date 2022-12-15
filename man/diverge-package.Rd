@@ -12,13 +12,14 @@ This package can be used to study the dynamics of continuous trait divergence in
 \tabular{ll}{
 Package: \tab diverge\cr
 Type: \tab Package\cr
-Version: \tab 2.0.4\cr
-Date: \tab 2022-01-18\cr
+Version: \tab 2.0.6\cr
+Date: \tab 2022-12-14\cr
 License: \tab GPL (>= 2) \cr
 }
 
 BASIC MODELS: \cr
 Alternative mechanisms of trait divergence are approximated here by stochastic process models. We use Brownian Motion (BM) models to approximate divergence under random drift or fluctuating selection; Ornstein-Uhlenbeck (OU) models in which two diverging lineages share an optima to approximate divergence under parallel and/or shared stabilizing selection; and OU models in which two diverging lineages are pulled toward alternative optima to approximate divergent adaptation (this last suite of models we refer to as "DA" models). In the DA models, the difference between optima of paired lineages (psi) measures the extent of divergent selection. A more detailed explanation of the model variants used in this package is provided in the model_select man page. \cr
+
 MIXTURE MODELS: \cr
 Of course, different pairs in any given dataset may be diverging under different processes. We thus include mixture models (NEW TO VERSION 2.0) in which pairs in a dataset can diverge under one of two processes, and the proportion of pairs diverging under a given processes is estimated as a model parameter. The two basic mixture models are DA-OU and OU-BM, and the proportion parameter returned is that for the more complex model (i.e. Proportion DA in a DA-OU model and Proportion OU in an OU-BM model). A DA-BM model is also possible and is encoded in these functions, but including this model in comparative tests leads to higher error rates in model selection, and the model behaviour is often biologically unrealistic, so we recommend against its usage (tests to be released in supp.mat of Anderson et al. 2021 in review). 
 
@@ -59,5 +60,5 @@ The code for several key functions has been lightly commented to aid users wishi
 \author{
 Sean A. S. Anderson and Jason T. Weir
 
-Maintainer: Sean A.S. Anderson <seanas.anderson@mail.utoronto.ca>
+Maintainer: Sean A.S. Anderson <sean.as.anderson@gmail.com>
 }
